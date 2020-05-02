@@ -73,12 +73,11 @@ def solveup(A, b):
     return x, operations
 
 
-def LUsolve(A, b):
-    L, U, P, Q, operations_dec = LUdecomposition(A)
+def LUsolve(L, U, P, Q, b):
     y, operations_down = solvedown(L, np.dot(P, b.T))
     z, operations_up = solveup(U, y)
     x = np.dot(Q, z)
-    operations = operations_dec + operations_down + operations_up + pow(len(A), 2) + len(A)*(len(A)-1)
+    operations = operations_down + operations_up + pow(len(U), 2) + len(U)*(len(U)-1)
     return x, operations
 
 
@@ -134,10 +133,11 @@ def Newton(x):
     iterations = 0
     operations = 0
     while True:
-        amendments, operationsLU = LUsolve(J(x), -F(x))
+        L, U, P, Q, operations_dec = LUdecomposition(J(x))
+        amendments, operations_solve = LUsolve(L, U, P, Q, -F(x))
         xNew = x + amendments
         iterations += 1
-        operations += operationsLU
+        operations += operations_dec + operations_solve
         if max(abs(amendments)) < e:
             break
         x = xNew
@@ -146,13 +146,14 @@ def Newton(x):
 
 def Newton_mod(x):
     iterations = 0
-    operations = 0
     J0 = J(x)
+    L, U, P, Q, operations_dec = LUdecomposition(J0)
+    operations = operations_dec
     while True:
-        amendments, operationsLU = LUsolve(J0, -F(x))
+        amendments, operations_solve = LUsolve(L, U, P, Q, -F(x))
         xNew = x + amendments
         iterations += 1
-        operations += operationsLU
+        operations += operations_solve
         if max(abs(amendments)) < e:
             break
         x = xNew
@@ -165,10 +166,12 @@ def Newton_modk(x, k):
     while True:
         if iterations < k:
             Jk = J(x)
-        amendments, operationsLU = LUsolve(Jk, -F(x))
+            L, U, P, Q, operations_dec = LUdecomposition(Jk)
+            operations += operations_dec
+        amendments, operations_solve = LUsolve(L, U, P, Q, -F(x))
         xNew = x + amendments
         iterations += 1
-        operations += operationsLU
+        operations += operations_solve
         if max(abs(amendments)) < e:
             break
         x = xNew
@@ -181,10 +184,12 @@ def Newton_gibrid(x, k):
     while True:
         if iterations % k == 0:
             Jk = J(x)
-        amendments, operationsLU = LUsolve(Jk, -F(x))
+            L, U, P, Q, operations_dec = LUdecomposition(Jk)
+            operations += operations_dec
+        amendments, operations_solve = LUsolve(L, U, P, Q, -F(x))
         xNew = x + amendments
         iterations += 1
-        operations += operationsLU
+        operations += operations_solve
         if max(abs(amendments)) < e:
             break
         x = xNew
@@ -215,7 +220,7 @@ print('Время выполнения:', end - start)
 print()
 
 start = timer()
-x, iterations, operations = Newton_modk(x0, 4)
+x, iterations, operations = Newton_modk(x0, 3)
 end = timer()
 print('C переходом к модифицированному:')
 print('Решение:', x)
@@ -225,7 +230,7 @@ print('Время выполнения:', end - start)
 print()
 
 start = timer()
-x, iterations, operations = Newton_gibrid(x0, 4)
+x, iterations, operations = Newton_gibrid(x0, 5)
 end = timer()
 print('Гибридный метод Ньютона:')
 print('Решение:', x)
