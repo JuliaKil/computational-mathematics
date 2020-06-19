@@ -23,12 +23,13 @@ def f(x, y):
 
 
 def YAMRK(h, y0, x0, xn):
+    k = round((xn - x0) / h)
     x = x0
     y = y0
     a21 = c2
     b2 = 1/(2*c2)
     b1 = 1 - b2
-    while x < xn:
+    for i in range(int(k)):
         K1 = f(x, y)
         K2 = f(x + c2*h, y + a21*h*K1)
         y = y + h*(b1*K1 + b2*K2)
@@ -37,9 +38,10 @@ def YAMRK(h, y0, x0, xn):
 
 
 def opponent(h, y0, x0, xn):
+    k = round((xn - x0) / h)
     y = y0
     x = x0
-    while x < xn:
+    for i in range(int(k)):
         K1 = f(x, y)
         K2 = f(x + h/3, y + h/3 * K1)
         K3 = f(x + 2*h/3, y - h/3 * K1 + h * K2)
@@ -60,32 +62,32 @@ def plot2k():
     plt.ylabel('ЯМРК')
     plt.xscale('log')
     plt.yscale('log')
-    plt.plot(h, h * 2)
+    plt.plot(h, h ** 2)
     plt.plot(h, normRK)
     plt.subplot(2, 1, 2)
     plt.ylabel('Метод-оппонент')
     plt.xlabel('h')
     plt.xscale('log')
     plt.yscale('log')
-    plt.plot(h, h * 4)
+    plt.plot(h, h ** 4)
     plt.plot(h, normop)
     plt.show()
 
 
 def hopt(tol, method, p):
-    h = 0.01
     R2 = np.linalg.norm((method(h/2, y0, x0, xn) - method(h, y0, x0, xn))/(pow(2, p) - 1))
-    hopt = h/2 * pow(tol/R2, 1/p)
-    return (xn - x0)/math.ceil((xn - x0)/hopt)
+    hopt = 0.95 * h/2 * pow(tol/R2, 1/p)
+    return (xn-x0)/math.ceil((xn-x0)/hopt)
 
 
 def plothopt(tol, method, p):
     x = x0
     y = y0
     h = hopt(tol, method, p)
+    k = round((xn - x0) / h)
     X = np.empty(0)
     norm = np.empty(0)
-    while x < xn:
+    for i in range(int(k)):
         y = method(h, y, x, x + h)
         x += h
         X = np.append(X, x)
@@ -195,9 +197,12 @@ print('Точное решение задачи:', exact(xn))
 print('ЯMРК:', YAMRK(h, y0, x0, xn))
 print('Метод-оппонент:', opponent(h, y0, x0, xn))
 plot2k()
-print('Решение с hopt(ЯМРК)...')
+print('Решение с hopt')
 tol = pow(10, -5)
+print('ЯМРК...')
 plothopt(tol, YAMRK, 2)
+print('Метод-оппонент...')
+plothopt(tol, opponent, 4)
 print('Автоматический выбор шага')
 atol = pow(10, -12)
 print('ЯМРК...')
